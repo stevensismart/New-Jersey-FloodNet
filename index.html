@@ -39,7 +39,7 @@
         }
         .navbar select,
         .navbar button {
-            padding: 10px;
+            padding: 5px;
             margin: 0 5px;
             border: none;
             border-radius: 5px;
@@ -57,7 +57,7 @@
             background-color: #0056b3;
         }
         .title {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             text-align: center;
             flex: 1;
@@ -82,10 +82,10 @@
             margin-bottom: 10px;
         }
         .interval-select-container {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
             background-color: #fff;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -117,6 +117,42 @@
         .download-buttons button:hover {
             background-color: #0056b3;
         }
+        /* Tabs styling */
+        .tabs {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .tab-buttons {
+            display: flex;
+            justify-content: space-around;
+            background-color: #f1f1f1;
+        }
+        .tab-buttons button {
+            background-color: #ddd;
+            color: #333;
+            padding: 5px 10px;
+            cursor: pointer;
+            border: none;
+            border-bottom: 2px solid transparent;
+            flex: 1;
+            transition: background-color 0.3s ease;
+        }
+        .tab-buttons button.active {
+            background-color: #fff;
+            border-bottom: 2px solid #007bff;
+            color: #007bff;
+        }
+        .tab-buttons button:hover {
+            background-color: #eee;
+        }
+        .tab-content {
+            display: none;
+            width: 100%;
+        }
+        .tab-content.active {
+            display: block;
+        }
     </style>
     <script>
         const API_KEY = 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc';
@@ -127,12 +163,12 @@
         let useInches = true;
         let applyAveraging = false; // Default to "All Data"
         let sensorCoordinates = [
-            { lat: 40.74475, lng: -74.02597 }, // Sensor 1
-            { lat: 40.74512, lng: -74.02655 }, // Sensor 2
-            { lat: 40.74428, lng: -74.02588 }, // Sensor 3
-            { lat: 40.74459, lng: -74.02543 }, // Sensor 4
-            { lat: 40.74495, lng: -74.02562 }, // Sensor 5
-            { lat: 40.74530, lng: -74.02608 }  // Sensor 6
+            { lat: 40.74475, lng: -74.02597, name: 'Sensor 1' }, // Sensor 1
+            { lat: 40.74512, lng: -74.02655, name: 'Sensor 2' }, // Sensor 2
+            { lat: 40.74428, lng: -74.02588, name: 'Sensor 3' }, // Sensor 3
+            { lat: 40.74459, lng: -74.02543, name: 'Sensor 4' }, // Sensor 4
+            { lat: 40.74495, lng: -74.02562, name: 'Sensor 5' }, // Sensor 5
+            { lat: 40.74530, lng: -74.02608, name: 'Sensor 6' }  // Sensor 6
         ];
         let sensorData = [];
         let charts = {}; // To store references to charts
@@ -268,17 +304,52 @@
                 displayedRainAccumulationData = getMedianData(rainAccumulationData, intervalMultiplier);
             }
 
-            const distanceCanvas = document.createElement('canvas');
-            distanceCanvas.classList.add('chart-container');
-            distanceCanvas.width = 600;
-            distanceCanvas.height = 300;
-            const distanceCtx = distanceCanvas.getContext('2d');
-            const distanceChart = new Chart(distanceCtx, {
+            const tabContainer = document.createElement('div');
+            tabContainer.className = 'tabs';
+
+            const tabButtons = document.createElement('div');
+            tabButtons.className = 'tab-buttons';
+
+            const waterLevelTabButton = document.createElement('button');
+            waterLevelTabButton.className = 'active';
+            waterLevelTabButton.innerText = 'Water Level';
+            waterLevelTabButton.onclick = () => {
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                waterLevelTab.classList.add('active');
+                document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
+                waterLevelTabButton.classList.add('active');
+            };
+
+            const rainTabButton = document.createElement('button');
+            rainTabButton.innerText = 'Rain Accumulation';
+            rainTabButton.onclick = () => {
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                rainTab.classList.add('active');
+                document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
+                rainTabButton.classList.add('active');
+            };
+
+            tabButtons.appendChild(waterLevelTabButton);
+            tabButtons.appendChild(rainTabButton);
+            tabContainer.appendChild(tabButtons);
+
+            const waterLevelTab = document.createElement('div');
+            waterLevelTab.className = 'tab-content active';
+
+            const rainTab = document.createElement('div');
+            rainTab.className = 'tab-content';
+
+            const waterLevelCanvas = document.createElement('canvas');
+            waterLevelCanvas.classList.add('chart-container');
+            waterLevelCanvas.width = 600;
+            waterLevelCanvas.height = 300;
+            const waterLevelCtx = waterLevelCanvas.getContext('2d');
+            const waterLevelChart = new Chart(waterLevelCtx, {
                 type: 'line',
                 data: {
                     labels: labels.slice(0, displayedWaterLevelData.length),
                     datasets: [{
-                        label: `Water Level (${useInches ? 'inches' : 'mm'})`,
+                        label: `Water Level`,
                         data: displayedWaterLevelData,
                         backgroundColor: 'rgba(255, 99, 132, 0.2)',
                         borderColor: 'rgba(255, 99, 132, 1)',
@@ -324,7 +395,7 @@
                 data: {
                     labels: labels.slice(0, displayedRainAccumulationData.length),
                     datasets: [{
-                        label: `Rain Accumulation (${useInches ? 'inches' : 'mm'})`,
+                        label: `Rain Accumulation`,
                         data: displayedRainAccumulationData,
                         backgroundColor: 'rgba(54, 162, 235, 0.2)',
                         borderColor: 'rgba(54, 162, 235, 1)',
@@ -360,14 +431,20 @@
                 }
             });
 
-            charts[index] = { distanceChart, rainChart }; // Store chart references
+            waterLevelTab.appendChild(waterLevelCanvas);
+            rainTab.appendChild(rainCanvas);
+
+            tabContainer.appendChild(waterLevelTab);
+            tabContainer.appendChild(rainTab);
+
+            charts[index] = { waterLevelChart, rainChart }; // Store chart references
 
             const popupContent = document.createElement('div');
             popupContent.className = 'popup-content';
 
             const dateElement = document.createElement('div');
             dateElement.className = 'popup-header';
-            dateElement.innerText = `Date: ${moment().format('YYYY-MM-DD')} Time Zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+            dateElement.innerText = `Sensor: ${coordinates.name}\nDate: ${moment().format('YYYY-MM-DD')} Time Zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
             popupContent.appendChild(dateElement);
 
             const intervalSelectContainer = document.createElement('div');
@@ -405,10 +482,8 @@
             };
             intervalSelectContainer.appendChild(toggleMetricButton);
 
+            popupContent.appendChild(tabContainer);
             popupContent.appendChild(intervalSelectContainer);
-
-            popupContent.appendChild(distanceCanvas);
-            popupContent.appendChild(rainCanvas);
 
             const downloadButtons = document.createElement('div');
             downloadButtons.className = 'download-buttons';
@@ -417,7 +492,7 @@
             downloadJSONButton.innerText = 'Download JSON';
             downloadJSONButton.onclick = () => {
                 const jsonData = {
-                    sensor: `Sensor ${index + 1}`,
+                    sensor: coordinates.name,
                     coordinates: coordinates,
                     data: filteredData
                 };
@@ -431,11 +506,11 @@
                 URL.revokeObjectURL(url);
             };
 
-            const downloadDistancePNGButton = document.createElement('button');
-            downloadDistancePNGButton.innerText = 'Download Water Level PNG';
-            downloadDistancePNGButton.onclick = () => {
+            const downloadWaterLevelPNGButton = document.createElement('button');
+            downloadWaterLevelPNGButton.innerText = 'Download Water Level PNG';
+            downloadWaterLevelPNGButton.onclick = () => {
                 const link = document.createElement('a');
-                link.href = distanceChart.toBase64Image();
+                link.href = waterLevelChart.toBase64Image();
                 link.download = `sensor_${index + 1}_water_level.png`;
                 link.click();
             };
@@ -450,7 +525,7 @@
             };
 
             downloadButtons.appendChild(downloadJSONButton);
-            downloadButtons.appendChild(downloadDistancePNGButton);
+            downloadButtons.appendChild(downloadWaterLevelPNGButton);
             downloadButtons.appendChild(downloadRainPNGButton);
 
             popupContent.appendChild(downloadButtons);
@@ -469,7 +544,7 @@
             fetchDataForAllSensors().then(() => {
                 Object.keys(charts).forEach(index => {
                     const parsedData = sensorData[index];
-                    const { distanceChart, rainChart } = charts[index];
+                    const { waterLevelChart, rainChart } = charts[index];
 
                     const dataPoints = getDataPointsCount(selectedInterval);
                     const filteredData = parsedData.slice(-dataPoints);
@@ -491,9 +566,9 @@
                         displayedRainAccumulationData = getMedianData(rainAccumulationData, intervalMultiplier);
                     }
 
-                    distanceChart.data.labels = labels.slice(0, displayedWaterLevelData.length);
-                    distanceChart.data.datasets[0].data = displayedWaterLevelData;
-                    distanceChart.update();
+                    waterLevelChart.data.labels = labels.slice(0, displayedWaterLevelData.length);
+                    waterLevelChart.data.datasets[0].data = displayedWaterLevelData;
+                    waterLevelChart.update();
 
                     rainChart.data.labels = labels.slice(0, displayedRainAccumulationData.length);
                     rainChart.data.datasets[0].data = displayedRainAccumulationData;
