@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>iSMART - New Jersey FloodNet</title>
+    <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <style>
+        html,
+        body,
+        #map {
+            height: 100%;
+            width: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+        .chart-container {
+            width: 600px;
+            height: 300px;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #343a40;
+            color: #fff;
+        }
+        .navbar select,
+        .navbar button {
+            padding: 10px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 5px;
+        }
+        .navbar select {
+            background-color: #495057;
+            color: #fff;
+        }
+        .navbar button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        .navbar button:hover {
+            background-color: #0056b3;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            flex: 1;
+        }
+        .title span {
+            color: #ffc107;
+        }
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+        .popup-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .popup-header {
+            width: 100%;
+            text-align: left;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .interval-select-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        .interval-select-container select,
+        .interval-select-container button {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+        .download-buttons {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .download-buttons button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .download-buttons button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        const API_KEY = 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc';
+        const SPREADSHEET_ID = '1XREbd9avUIlmt7rPGmNyGbpU7it2nBu1CsS2CEcUmEw';
+
+        let map;
+        let selectedInterval = '1min';
+        let useInches = true;
+        let applyAveraging = false; // Default to "All Data"
+        let sensorCoordinates = [
+            { lat: 40.74475, lng: -74.02597 }, // Sensor 1
+            { lat: 40.74512, lng: -74.02655 }, // Sensor 2
+            { lat: 40.74428, lng: -74.02588 }, // Sensor 3
+            { lat: 40.74459, lng: -74.02543 }, // Sensor 4
+            { lat: 40.74495, lng: -74.02562 }, // Sensor 5
+            { lat: 40.74530, lng: -74.02608 }  // Sensor 6
+        ];
+        let sensorData = [];
+        let charts = {}; // To store references to charts
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            initNavbar();
+            fetchDataForAllSensors().then(() => {
+                setInterval(updateCharts, 60000); // Update charts every 1 minute
+            });
+        });
+
+        function initMap() {
+            if (map) {
+                map.remove();  // Properly remove the existing map instance
+            }
+            map = L.map('map').setView([40.74475, -74.02597], 17);
+            const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 25,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            sensorCoordinates.forEach((coords, index) => {
+                const marker = L.marker([coords.lat, coords.lng]).addTo(map);
+                marker.on('click', () => {
+                    createCharts(index, marker, coords);
+                });
+            });
+        }
+
+        function initNavbar() {
+            const navbar = document.createElement('div');
+            navbar.className = 'navbar';
+
+            const title = document.createElement('div');
+            title.className = 'title';
+            title.innerHTML = 'New Jersey Flood Network by <span>I-SMART Lab</span>';
+
+            const navbarRight = document.createElement('div');
+            navbarRight.className = 'navbar-right';
+
+            navbar.appendChild(title);
+            navbar.appendChild(navbarRight);
+
+            document.body.insertBefore(navbar, document.body.firstChild);
+        }
+
+        async function fetchDataForAllSensors() {
+            const fetchPromises = sensorCoordinates.map((_, index) => {
+                const RANGE = `V4 Sensor ${index + 1} Graph!A:E`;  // Include the sheet range properly
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+                return fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch data for sensor ${index + 1}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(`Fetched data for sensor ${index + 1}:`, data.values);
+                        sensorData[index] = data.values.slice(1).map(row => ({
+                            timestamp: new Date(row[0]),
+                            waterLevelMM: parseFloat(row[1]),
+                            waterLevelInches: parseFloat(row[2]),
+                            rainAccumulationMM: parseFloat(row[3]),
+                            rainAccumulationInches: parseFloat(row[4])
+                        }));
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching data for sensor ${index + 1}:`, error);
+                    });
+            });
+
+            await Promise.all(fetchPromises);
+            console.log('All data fetched successfully.');
+        }
+
+        function getDataPointsCount(interval) {
+            const intervalMapping = {
+                '1min': 60,
+                '5min': 5 * 60,
+                '15min': 15 * 60,
+                '1hour': 15 * 240
+            };
+            return intervalMapping[interval] || 60;
+        }
+
+        function calculateMedian(values) {
+            if (values.length === 0) return 0;
+            values.sort((a, b) => a - b);
+            const half = Math.floor(values.length / 2);
+
+            if (values.length % 2) {
+                return values[half];
+            }
+
+            return (values[half - 1] + values[half]) / 2.0;
+        }
+
+        function getMedianData(data, batchSize) {
+            const medianData = [];
+            for (let i = 0; i < data.length; i += batchSize) {
+                const batch = data.slice(i, i + batchSize);
+                medianData.push(calculateMedian(batch));
+            }
+            return medianData;
+        }
+
+        function createCharts(index, marker, coordinates) {
+            const parsedData = sensorData[index];
+            if (!parsedData || parsedData.length === 0) {
+                console.error(`No data available for sensor ${index + 1}`);
+                return;
+            }
+
+            const dataPoints = getDataPointsCount(selectedInterval);
+            const filteredData = parsedData.slice(-dataPoints);
+
+            const labels = filteredData.map(entry => moment(entry.timestamp).format('HH:mm'));
+            const waterLevelData = useInches ? filteredData.map(entry => entry.waterLevelInches.toFixed(2)) : filteredData.map(entry => entry.waterLevelMM.toFixed(2));
+            const rainAccumulationData = useInches ? filteredData.map(entry => entry.rainAccumulationInches.toFixed(2)) : filteredData.map(entry => entry.rainAccumulationMM.toFixed(2));
+
+            let displayedWaterLevelData = waterLevelData;
+            let displayedRainAccumulationData = rainAccumulationData;
+
+            if (selectedInterval !== '1min' && applyAveraging) {
+                const intervalMultiplier = {
+                    '5min': 5,
+                    '15min': 15,
+                    '1hour': 15
+                }[selectedInterval];
+                displayedWaterLevelData = getMedianData(waterLevelData, intervalMultiplier);
+                displayedRainAccumulationData = getMedianData(rainAccumulationData, intervalMultiplier);
+            }
+
+            const distanceCanvas = document.createElement('canvas');
+            distanceCanvas.classList.add('chart-container');
+            distanceCanvas.width = 600;
+            distanceCanvas.height = 300;
+            const distanceCtx = distanceCanvas.getContext('2d');
+            const distanceChart = new Chart(distanceCtx, {
+                type: 'line',
+                data: {
+                    labels: labels.slice(0, displayedWaterLevelData.length),
+                    datasets: [{
+                        label: `Water Level (${useInches ? 'inches' : 'mm'})`,
+                        data: displayedWaterLevelData,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                parser: 'HH:mm',
+                                tooltipFormat: 'HH:mm',
+                                unit: 'minute',
+                                displayFormats: {
+                                    minute: 'HH:mm'
+                                }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Water Level'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return `${value.toFixed(2)} ${useInches ? 'inches' : 'mm'}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const rainCanvas = document.createElement('canvas');
+            rainCanvas.classList.add('chart-container');
+            rainCanvas.width = 600;
+            rainCanvas.height = 300;
+            const rainCtx = rainCanvas.getContext('2d');
+            const rainChart = new Chart(rainCtx, {
+                type: 'line',
+                data: {
+                    labels: labels.slice(0, displayedRainAccumulationData.length),
+                    datasets: [{
+                        label: `Rain Accumulation (${useInches ? 'inches' : 'mm'})`,
+                        data: displayedRainAccumulationData,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                parser: 'HH:mm',
+                                tooltipFormat: 'HH:mm',
+                                unit: 'minute',
+                                displayFormats: {
+                                    minute: 'HH:mm'
+                                }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Rain Accumulation'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return `${value.toFixed(2)} ${useInches ? 'inches' : 'mm'}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            charts[index] = { distanceChart, rainChart }; // Store chart references
+
+            const popupContent = document.createElement('div');
+            popupContent.className = 'popup-content';
+
+            const dateElement = document.createElement('div');
+            dateElement.className = 'popup-header';
+            dateElement.innerText = `Date: ${moment().format('YYYY-MM-DD')} Time Zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+            popupContent.appendChild(dateElement);
+
+            const intervalSelectContainer = document.createElement('div');
+            intervalSelectContainer.className = 'interval-select-container';
+            const intervalSelect = document.createElement('select');
+            const intervals = ['1min', '5min', '15min', '1hour'];
+            intervals.forEach(interval => {
+                const option = document.createElement('option');
+                option.value = interval;
+                option.innerText = interval;
+                intervalSelect.appendChild(option);
+            });
+            intervalSelect.value = selectedInterval;
+            intervalSelect.onchange = () => {
+                selectedInterval = intervalSelect.value;
+                updateCharts();
+            };
+            intervalSelectContainer.appendChild(intervalSelect);
+
+            const toggleAveragingButton = document.createElement('button');
+            toggleAveragingButton.innerText = applyAveraging ? 'Averaging' : 'All Data';
+            toggleAveragingButton.onclick = () => {
+                applyAveraging = !applyAveraging;
+                toggleAveragingButton.innerText = applyAveraging ? 'Averaging' : 'All Data';
+                updateCharts();
+            };
+            intervalSelectContainer.appendChild(toggleAveragingButton);
+
+            const toggleMetricButton = document.createElement('button');
+            toggleMetricButton.innerText = useInches ? 'Inches' : 'mm';
+            toggleMetricButton.onclick = () => {
+                useInches = !useInches;
+                toggleMetricButton.innerText = useInches ? 'Inches' : 'mm';
+                updateCharts();
+            };
+            intervalSelectContainer.appendChild(toggleMetricButton);
+
+            popupContent.appendChild(intervalSelectContainer);
+
+            popupContent.appendChild(distanceCanvas);
+            popupContent.appendChild(rainCanvas);
+
+            const downloadButtons = document.createElement('div');
+            downloadButtons.className = 'download-buttons';
+
+            const downloadJSONButton = document.createElement('button');
+            downloadJSONButton.innerText = 'Download JSON';
+            downloadJSONButton.onclick = () => {
+                const jsonData = {
+                    sensor: `Sensor ${index + 1}`,
+                    coordinates: coordinates,
+                    data: filteredData
+                };
+                const json = JSON.stringify(jsonData, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sensor_${index + 1}_data.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            const downloadDistancePNGButton = document.createElement('button');
+            downloadDistancePNGButton.innerText = 'Download Water Level PNG';
+            downloadDistancePNGButton.onclick = () => {
+                const link = document.createElement('a');
+                link.href = distanceChart.toBase64Image();
+                link.download = `sensor_${index + 1}_water_level.png`;
+                link.click();
+            };
+
+            const downloadRainPNGButton = document.createElement('button');
+            downloadRainPNGButton.innerText = 'Download Rain PNG';
+            downloadRainPNGButton.onclick = () => {
+                const link = document.createElement('a');
+                link.href = rainChart.toBase64Image();
+                link.download = `sensor_${index + 1}_rain.png`;
+                link.click();
+            };
+
+            downloadButtons.appendChild(downloadJSONButton);
+            downloadButtons.appendChild(downloadDistancePNGButton);
+            downloadButtons.appendChild(downloadRainPNGButton);
+
+            popupContent.appendChild(downloadButtons);
+
+            if (marker.getPopup()) {
+                marker.setPopupContent(popupContent);
+            } else {
+                marker.bindPopup(popupContent, {
+                    maxWidth: 800,
+                    maxHeight: 800
+                }).openPopup();
+            }
+        }
+
+        function updateCharts() {
+            fetchDataForAllSensors().then(() => {
+                Object.keys(charts).forEach(index => {
+                    const parsedData = sensorData[index];
+                    const { distanceChart, rainChart } = charts[index];
+
+                    const dataPoints = getDataPointsCount(selectedInterval);
+                    const filteredData = parsedData.slice(-dataPoints);
+
+                    const labels = filteredData.map(entry => moment(entry.timestamp).format('HH:mm'));
+                    const waterLevelData = useInches ? filteredData.map(entry => entry.waterLevelInches.toFixed(2)) : filteredData.map(entry => entry.waterLevelMM.toFixed(2));
+                    const rainAccumulationData = useInches ? filteredData.map(entry => entry.rainAccumulationInches.toFixed(2)) : filteredData.map(entry => entry.rainAccumulationMM.toFixed(2));
+
+                    let displayedWaterLevelData = waterLevelData;
+                    let displayedRainAccumulationData = rainAccumulationData;
+
+                    if (selectedInterval !== '1min' && applyAveraging) {
+                        const intervalMultiplier = {
+                            '5min': 5,
+                            '15min': 15,
+                            '1hour': 15
+                        }[selectedInterval];
+                        displayedWaterLevelData = getMedianData(waterLevelData, intervalMultiplier);
+                        displayedRainAccumulationData = getMedianData(rainAccumulationData, intervalMultiplier);
+                    }
+
+                    distanceChart.data.labels = labels.slice(0, displayedWaterLevelData.length);
+                    distanceChart.data.datasets[0].data = displayedWaterLevelData;
+                    distanceChart.update();
+
+                    rainChart.data.labels = labels.slice(0, displayedRainAccumulationData.length);
+                    rainChart.data.datasets[0].data = displayedRainAccumulationData;
+                    rainChart.update();
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+</head>
+<body>
+    <div id="map"></div>
+</body>
+</html>
