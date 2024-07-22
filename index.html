@@ -367,7 +367,7 @@
             waterLevelCanvas.height = 300;
             const waterLevelCtx = waterLevelCanvas.getContext('2d');
             const waterLevelChart = new Chart(waterLevelCtx, {
-                type: 'scatter',
+                type: 'line',
                 data: {
                     labels: labels.slice(0, displayedWaterLevelData.length),
                     datasets: [{
@@ -414,7 +414,7 @@
             rainCanvas.height = 300;
             const rainCtx = rainCanvas.getContext('2d');
             const rainChart = new Chart(rainCtx, {
-                type: 'scactter',
+                type: 'line',
                 data: {
                     labels: labels.slice(0, displayedRainAccumulationData.length),
                     datasets: [{
