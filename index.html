@@ -16,6 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment-timezone/builds/moment-timezone-with-data.min.js"></script>
     <style>
         html,
         body,
@@ -333,22 +334,24 @@
             tabButtons.className = 'tab-buttons';
 
             const waterLevelTabButton = document.createElement('button');
-            waterLevelTabButton.className = 'active';
             waterLevelTabButton.innerText = 'Water Level';
             waterLevelTabButton.onclick = () => {
                 document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
                 waterLevelTab.classList.add('active');
                 document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
                 waterLevelTabButton.classList.add('active');
+                toggleAveragingButton.disabled = true; // Disable averaging button for Water Level tab
             };
 
             const rainTabButton = document.createElement('button');
+            rainTabButton.className = 'active';
             rainTabButton.innerText = 'Rain Accumulation';
             rainTabButton.onclick = () => {
                 document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
                 rainTab.classList.add('active');
                 document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
                 rainTabButton.classList.add('active');
+                toggleAveragingButton.disabled = false; // Enable averaging button for Rain Accumulation tab
             };
 
             tabButtons.appendChild(waterLevelTabButton);
@@ -356,10 +359,10 @@
             tabContainer.appendChild(tabButtons);
 
             const waterLevelTab = document.createElement('div');
-            waterLevelTab.className = 'tab-content active';
+            waterLevelTab.className = 'tab-content';
 
             const rainTab = document.createElement('div');
-            rainTab.className = 'tab-content';
+            rainTab.className = 'tab-content active';
 
             const waterLevelCanvas = document.createElement('canvas');
             waterLevelCanvas.classList.add('chart-container');
@@ -470,7 +473,7 @@
 
             const dateElement = document.createElement('div');
             dateElement.className = 'popup-header';
-            dateElement.innerHTML = `Sensor: ${coordinates.name} <span class="error-status">Status: <div class="error-circle ${errorStatus}"></div></span><br>Date: ${moment().format('YYYY-MM-DD')} Time Zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+            dateElement.innerHTML = `Sensor: ${coordinates.name} <span class="error-status">Status: <div class="error-circle ${errorStatus}"></div></span><br>Date: ${moment().tz('America/New_York').format('YYYY-MM-DD')} Time: ${moment().tz('America/New_York').format('HH:mm')} (EDT)`;
             popupContent.appendChild(dateElement);
 
             const intervalSelectContainer = document.createElement('div');
@@ -490,6 +493,7 @@
             };
             intervalSelectContainer.appendChild(intervalSelect);
 
+            // Create the toggleAveragingButton
             const toggleAveragingButton = document.createElement('button');
             toggleAveragingButton.innerText = applyAveraging ? 'Averaging' : 'All Data';
             toggleAveragingButton.onclick = () => {
