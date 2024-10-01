@@ -314,25 +314,9 @@
             const dataPoints = getDataPointsCount(selectedInterval);
             const filteredData = parsedData.slice(-dataPoints);
 
-            // Find indices where errorCode is not 0 and remove one before and one after
-            let indicesToRemove = [];
-            filteredData.forEach((entry, idx) => {
-                if (entry.errorCode !== 0) {
-                    indicesToRemove.push(idx); // Mark this index for removal
-                    if (idx > 0) indicesToRemove.push(idx - 1); // Mark one before
-                    if (idx < filteredData.length - 1) indicesToRemove.push(idx + 1); // Mark one after
-                }
-            });
-
-            // Remove the entries from the data
-            const validWaterLevelData = filteredData
-                .filter((_, idx) => !indicesToRemove.includes(idx)) // Exclude marked indices
-                .map(entry => ({
-                    timestamp: entry.timestamp,
-                    waterLevelInches: useInches ? entry.waterLevelInches.toFixed(2) : entry.waterLevelMM.toFixed(2),
-                    rainAccumulationInches: useInches ? entry.rainAccumulationInches.toFixed(2) : entry.rainAccumulationMM.toFixed(2),
-                }));
-
+            const labels = filteredData.map(entry => moment(entry.timestamp).format('MM-DD HH:mm'));  // Include date and time
+            const waterLevelData = useInches ? filteredData.map(entry => entry.waterLevelInches.toFixed(2)) : filteredData.map(entry => entry.waterLevelMM.toFixed(2));
+            const rainAccumulationData = useInches ? filteredData.map(entry => entry.rainAccumulationInches.toFixed(2)) : filteredData.map(entry => entry.rainAccumulationMM.toFixed(2));
 
             let displayedWaterLevelData = waterLevelData;
             let displayedRainAccumulationData = rainAccumulationData;
