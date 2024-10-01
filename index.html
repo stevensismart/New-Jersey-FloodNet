@@ -314,9 +314,17 @@
             const dataPoints = getDataPointsCount(selectedInterval);
             const filteredData = parsedData.slice(-dataPoints);
 
-            const labels = filteredData.map(entry => moment(entry.timestamp).format('MM-DD HH:mm'));  // Include date and time
-            const waterLevelData = useInches ? filteredData.map(entry => entry.waterLevelInches.toFixed(2)) : filteredData.map(entry => entry.waterLevelMM.toFixed(2));
-            const rainAccumulationData = useInches ? filteredData.map(entry => entry.rainAccumulationInches.toFixed(2)) : filteredData.map(entry => entry.rainAccumulationMM.toFixed(2));
+            // Filter out water level data points where the errorCode is not 0
+            const validWaterLevelData = filteredData.filter(entry => entry.errorCode === 0);
+
+            const labels = validWaterLevelData.map(entry => moment(entry.timestamp).format('MM-DD HH:mm'));  // Include date and time
+            const waterLevelData = useInches
+                ? validWaterLevelData.map(entry => entry.waterLevelInches.toFixed(2))
+                : validWaterLevelData.map(entry => entry.waterLevelMM.toFixed(2));
+            const rainAccumulationData = useInches
+                ? filteredData.map(entry => entry.rainAccumulationInches.toFixed(2))
+                : filteredData.map(entry => entry.rainAccumulationMM.toFixed(2));
+
 
             let displayedWaterLevelData = waterLevelData;
             let displayedRainAccumulationData = rainAccumulationData;
