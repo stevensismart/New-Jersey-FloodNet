@@ -171,6 +171,38 @@
         .tab-content.active {
             display: block;
         }
+        .sensor-tooltip {
+    display: flex;
+    flex-direction: column; /* Stack title and image vertically */
+    align-items: center;
+    justify-content: center;
+    width: 300px; /* Adjust width */
+    height: 320px; /* Adjust height to fit title and image */
+    overflow: hidden;
+    border: 2px solid #ddd;
+    background-color: #fff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 5px;
+    text-align: center;
+}
+
+.sensor-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.sensor-tooltip img {
+    max-width: 100%;
+    max-height: calc(100% - 30px); /* Adjusts for title height */
+    object-fit: contain; /* Ensures image scales to fit within the tooltip */
+    border-radius: 8px;
+}
+
     </style>
     <script>
         const API_KEY = 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc';
@@ -182,12 +214,12 @@
         let applyAveraging = false;
         
         const sensorCoordinates = [
-            { number: 12, lat: 40.9948594604189, lng: -74.02735098264648, name: 'Sensor 12 @ Overbrook Park' },
-            { number: 13, lat: 40.99852592064648, lng: -74.03005456805411, name: 'Sensor 13 @ Brookside Park' },
-            { number: 14, lat: 40.99641869891097, lng: -74.0399895426159, name: 'Sensor 14 @ K-mart' },
-            { number: 15, lat: 40.99895153624935, lng: -74.0402086386315, name: 'Sensor 15 @ Richard Nugent Park' },
-            { number: 18, lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 18 @ Hillsdale Public Works Department' }
-        ];
+    { number: 12, lat: 40.9948594604189, lng: -74.02735098264648, name: 'Sensor 12 @ Overbrook Park', image: "./images/sensor12/overbrook_park.jpeg" },
+    { number: 13, lat: 40.99852592064648, lng: -74.03005456805411, name: 'Sensor 13 @ Brookside Park', image: "./images/sensor13/brookside_park.jpeg" },
+    { number: 14, lat: 40.99641869891097, lng: -74.0399895426159, name: 'Sensor 14 @ K-mart', image: "./images/sensor14/kmart.jpeg" },
+    { number: 15, lat: 40.99895153624935, lng: -74.0402086386315, name: 'Sensor 15 @ Richard Nugent Park', image: "./images/sensor15/richard_nugent_park.jpeg" },
+    { number: 18, lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 18 @ Hillsdale Public Works Department', image: "./images/sensor18/hillsdale_public_works.jpeg" }
+];
 
         let sensorData = [];
         let charts = {}; // To store references to charts
@@ -212,6 +244,20 @@
 
             sensorCoordinates.forEach((coords, index) => {
                 const marker = L.marker([coords.lat, coords.lng]).addTo(map);
+
+                // Bind a tooltip with the sensor's image on hover
+                marker.bindTooltip(
+                `<div class="sensor-tooltip">
+                    <div class="sensor-title">${coords.name}</div>
+                    <img src="${coords.image}" alt="${coords.name}">
+                </div>`,
+                {
+                    permanent: false,
+                    direction: 'top',
+                    className: 'custom-tooltip'
+                }
+            );
+
                 marker.on('click', () => {
                     createCharts(index, marker, coords);
                 });
@@ -675,32 +721,40 @@ function createCharts(index, marker, coordinates) {
         }
 
         function updateCharts() {
-            fetchDataForAllSensors().then(() => {
-                Object.keys(charts).forEach(index => {
-                    const parsedData = sensorData[index]?.values;
-                    if (!parsedData) return;
+        fetchDataForAllSensors().then(() => {
+        Object.keys(charts).forEach(index => {
+            const parsedData = sensorData[index]?.values;
+            if (!parsedData) return;
 
-                    const dataPoints = getDataPointsCount(selectedInterval);
-                    const filteredData = parsedData.slice(-dataPoints);
+            const dataPoints = getDataPointsCount(selectedInterval);
+            const filteredData = parsedData.slice(-dataPoints);
 
-                    const labels = filteredData.map(entry => moment(entry.timestamp).format('MM-DD HH:mm'));
-                    const waterLevelData = useInches ? filteredData.map(entry => entry.waterLevelInches.toFixed(2)) : filteredData.map(entry => entry.waterLevelMM.toFixed(2));
-                    const rainAccumulationData = useInches ? filteredData.map(entry => entry.rainAccumulationInches.toFixed(2)) : filteredData.map(entry => entry.rainAccumulationMM.toFixed(2));
-                    const voltageData = filteredData.map(entry => entry.voltage.toFixed(2));
+            const labels = filteredData.map(entry => moment(entry.timestamp).format('MM-DD HH:mm'));
+            const waterLevelData = useInches ? filteredData.map(entry => entry.waterLevelInches.toFixed(2)) : filteredData.map(entry => entry.waterLevelMM.toFixed(2));
+            const rainAccumulationData = useInches ? filteredData.map(entry => entry.rainAccumulationInches.toFixed(2)) : filteredData.map(entry => entry.rainAccumulationMM.toFixed(2));
+            const voltageData = filteredData.map(entry => entry.voltage.toFixed(2));
 
-                    charts[index].waterLevelTab.chart.data.labels = labels;
-                    charts[index].waterLevelTab.chart.data.datasets[0].data = waterLevelData;
-                    charts[index].rainTab.chart.data.labels = labels;
-                    charts[index].rainTab.chart.data.datasets[0].data = rainAccumulationData;
-                    charts[index].voltageTab.chart.data.labels = labels;
-                    charts[index].voltageTab.chart.data.datasets[0].data = voltageData;
+            // Check if each chart exists before updating
+            if (charts[index]?.waterLevelChart) {
+                charts[index].waterLevelChart.data.labels = labels;
+                charts[index].waterLevelChart.data.datasets[0].data = waterLevelData;
+                charts[index].waterLevelChart.update();
+            }
 
-                    charts[index].waterLevelTab.chart.update();
-                    charts[index].rainTab.chart.update();
-                    charts[index].voltageTab.chart.update();
-                });
-            });
-        }
+            if (charts[index]?.rainChart) {
+                charts[index].rainChart.data.labels = labels;
+                charts[index].rainChart.data.datasets[0].data = rainAccumulationData;
+                charts[index].rainChart.update();
+            }
+
+            if (charts[index]?.voltageChart) {
+                charts[index].voltageChart.data.labels = labels;
+                charts[index].voltageChart.data.datasets[0].data = voltageData;
+                charts[index].voltageChart.update();
+            }
+        });
+    });
+}
     </script>
 </head>
 <body>
