@@ -1,3 +1,4 @@
+/* styles.css */
 html,
 body,
 #map {
@@ -153,4 +154,36 @@ body,
 }
 .tab-content.active {
     display: block;
+}
+
+.sensor-tooltip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 300px;
+    height: 320px;
+    overflow: hidden;
+    border: 2px solid #ddd;
+    background-color: #fff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 5px;
+    text-align: center;
+}
+
+.sensor-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.sensor-tooltip img {
+    max-width: 100%;
+    max-height: calc(100% - 30px);
+    object-fit: contain;
+    border-radius: 8px;
 }

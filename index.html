@@ -60,6 +60,14 @@
 
             sensorCoordinates.forEach((coords, index) => {
                 const marker = L.marker([coords.lat, coords.lng]).addTo(map);
+
+                marker.bindTooltip(
+                    `<div class="sensor-tooltip">
+                    <div class="sensor-title">${coords.name}</div>
+                    <img src="${coords.image}" alt="${coords.name}">
+                    </div>`,
+                    { permanent: false, direction: 'top', className: 'custom-tooltip' }
+                );
                 marker.on('click', () => {
                     createCharts(index, marker, coords);
                 });
