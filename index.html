@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
+    <link rel="stylesheet" href="styles.css"> <!-- Link to the external CSS file -->
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,184 +20,23 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment-timezone/builds/moment-timezone-with-data.min.js"></script>
-    <style>
-        html,
-        body,
-        #map {
-            height: 100%;
-            width: 100%;
-            padding: 0px;
-            margin: 0px;
-        }
-        .chart-container {
-            width: 600px;
-            height: 300px;
-        }
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background-color: #343a40;
-            color: #fff;
-        }
-        .navbar select,
-        .navbar button {
-            padding: 5px;
-            margin: 0 5px;
-            border: none;
-            border-radius: 5px;
-        }
-        .navbar select {
-            background-color: #495057;
-            color: #fff;
-        }
-        .navbar button {
-            background-color: #007bff;
-            color: #fff;
-            cursor: pointer;
-        }
-        .navbar button:hover {
-            background-color: #0056b3;
-        }
-        .title {
-            font-size: 20px;
-            font-weight: bold;
-            text-align: center;
-            flex: 1;
-        }
-        .title span {
-            color: #ffc107;
-        }
-        .navbar-right {
-            display: flex;
-            align-items: center;
-        }
-        .popup-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-        .popup-header {
-            width: 100%;
-            text-align: left;
-            font-weight: bold;
-            margin-bottom: 10px;
-            position: relative;
-        }
-        .error-status {
-            display: flex;
-            align-items: center;
-            position: absolute;
-            top: 0;
-            right: 0;
-        }
-        .error-circle {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-left: 5px;
-        }
-        .error-yes {
-            background-color: red;
-        }
-        .error-no {
-            background-color: green;
-        }
-        .interval-select-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 10px;
-            background-color: #fff;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 5px;
-        }
-        .interval-select-container select,
-        .interval-select-container button {
-            padding: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            font-size: 14px;
-            margin-right: 5px;
-        }
-        .download-buttons {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            margin-top: 10px;
-        }
-        .download-buttons button {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .download-buttons button:hover {
-            background-color: #0056b3;
-        }
-        /* Tabs styling */
-        .tabs {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
-        .tab-buttons {
-            display: flex;
-            justify-content: space-around;
-            background-color: #f1f1f1;
-        }
-        .tab-buttons button {
-            background-color: #ddd;
-            color: #333;
-            padding: 5px 10px;
-            cursor: pointer;
-            border: none;
-            border-bottom: 2px solid transparent;
-            flex: 1;
-            transition: background-color 0.3s ease;
-        }
-        .tab-buttons button.active {
-            background-color: #fff;
-            border-bottom: 2px solid #007bff;
-            color: #007bff;
-        }
-        .tab-buttons button:hover {
-            background-color: #eee;
-        }
-        .tab-content {
-            display: none;
-            width: 100%;
-        }
-        .tab-content.active {
-            display: block;
-        }
-    </style>
+
     <script>
         const API_KEY = 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc';
-        const SPREADSHEET_ID = '1miVJSa0xSzzh3qg4o9cbhbeWDp-TigrdakkU91oEmn8';
+        const SPREADSHEET_ID = '1X3Zp02qta_OV76s01pV52FV0kn3x3w0x7kzGLltbH6o';
 
         let map;
         let selectedInterval = '1min';
         let useInches = true;
         let applyAveraging = false; // Default to "All Data"
         let sensorCoordinates = [
-            { lat: 40.74475, lng: -74.02597, name: 'Sensor 1' }, // Sensor 1
-            { lat: 40.746555657779005, lng: -74.03198526745322, name: 'Sensor 2 @Finnegan\'s Hoboken' }, // Sensor 2
-            { lat: 40.9948594604189, lng: -74.02735098264648, name: 'Sensor 3 @ Overbrook Park' }, // Sensor 3 - Overbrook Park
-            { lat: 40.74459, lng: -74.02543, name: 'Sensor 4' }, // Sensor 4
-            { lat: 40.99895153624935, lng: -74.0402086386315, name: 'Sensor 5 @  Richard Nugent Park' },  // Sensor 5
-            { lat: 40.74447226722596, lng: -74.02729028141329, name: 'Sensor 6 @Davidson Lab' },  // Sensor 6
-            { lat: 40.73584599585296, lng: -74.02767888184088, name: 'Sensor 7 @ Hoboken Terminal' },  // Sensor 7
-            { lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 8 @ Hillsdale Public Works Department' },  // Sensor 8
-            { lat: 40.99852592064648, lng: -74.03005456805411, name: 'Sensor 9 @ Brookside Park' }, // Sensor 9 - Westwood - Hillsdale Public Library
-            { lat: 40.99641869891097, lng: -74.0399895426159, name: 'Sensor 10 @ K-mart' } // Sensor 10 - Westwood            
+            { number: 12, lat: 40.9948594604189, lng: -74.02735098264648, name: 'Sensor 12 @ Overbrook Park', image: "./images/sensor12/overbrook_park.jpeg" },
+            { number: 13, lat: 40.99852592064648, lng: -74.03005456805411, name: 'Sensor 13 @ Brookside Park', image: "./images/sensor13/brookside_park.jpeg" },
+            { number: 14, lat: 40.99641869891097, lng: -74.0399895426159, name: 'Sensor 14 @ K-mart', image: "./images/sensor14/kmart.jpeg" },
+            { number: 15, lat: 40.99895153624935, lng: -74.0402086386315, name: 'Sensor 15 @ Richard Nugent Park', image: "./images/sensor15/richard_nugent_park.jpeg" },
+            { number: 18, lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 18 @ Hillsdale Public Works Department', image: "./images/sensor18/hillsdale_public_works.jpeg" }
         ];
+
         let sensorData = [];
         let charts = {}; // To store references to charts
 
@@ -218,6 +60,14 @@
 
             sensorCoordinates.forEach((coords, index) => {
                 const marker = L.marker([coords.lat, coords.lng]).addTo(map);
+
+                marker.bindTooltip(
+                    `<div class="sensor-tooltip">
+                    <div class="sensor-title">${coords.name}</div>
+                    <img src="${coords.image}" alt="${coords.name}">
+                    </div>`,
+                    { permanent: false, direction: 'top', className: 'custom-tooltip' }
+                );
                 marker.on('click', () => {
                     createCharts(index, marker, coords);
                 });
@@ -243,17 +93,17 @@
 
         async function fetchDataForAllSensors() {
             const fetchPromises = sensorCoordinates.map((coords, index) => {
-                const RANGE = `V4 Sensor ${index + 1} Graph!A:F`;  // Include the sheet range properly
+                const RANGE = `V4 Sensor ${coords.number} Graph!A:F`;  // Include the sheet range properly
                 const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
                 return fetch(url)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error(`Failed to fetch data for sensor ${index + 1}: ${response.statusText}`);
+                            throw new Error(`Failed to fetch data for sensor ${coords.number}: ${response.statusText}`);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        console.log(`Fetched data for sensor ${index + 1}:`, data.values);
+                        console.log(`Fetched data for sensor ${coords.number}:`, data.values);
                         sensorData[index] = data.values.slice(1).map(row => ({
                             timestamp: new Date(row[0]),
                             waterLevelMM: parseFloat(row[1]),
@@ -265,7 +115,7 @@
                         coords.errorCode = sensorData[index][sensorData[index].length - 1]?.errorCode || 0;
                     })
                     .catch(error => {
-                        console.error(`Error fetching data for sensor ${index + 1}:`, error);
+                        console.error(`Error fetching data for sensor ${coords.number}:`, error);
                     });
             });
 
@@ -307,7 +157,7 @@
         function createCharts(index, marker, coordinates) {
             const parsedData = sensorData[index];
             if (!parsedData || parsedData.length === 0) {
-                console.error(`No data available for sensor ${index + 1}`);
+                console.error(`No data available for sensor ${coordinates.number}`);
                 return;
             }
 
@@ -535,7 +385,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `sensor_${index + 1}_data.json`;
+                a.download = `sensor_${coordinates.number}_data.json`;
                 a.click();
                 URL.revokeObjectURL(url);
             };
@@ -545,7 +395,7 @@
             downloadWaterLevelPNGButton.onclick = () => {
                 const link = document.createElement('a');
                 link.href = waterLevelChart.toBase64Image();
-                link.download = `sensor_${index + 1}_water_level.png`;
+                link.download = `sensor_${coordinates.number}_water_level.png`;
                 link.click();
             };
 
@@ -554,7 +404,7 @@
             downloadRainPNGButton.onclick = () => {
                 const link = document.createElement('a');
                 link.href = rainChart.toBase64Image();
-                link.download = `sensor_${index + 1}_rain.png`;
+                link.download = `sensor_${coordinates.number}_rain.png`;
                 link.click();
             };
 
