@@ -21,12 +21,21 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment-timezone/builds/moment-timezone-with-data.min.js"></script>
 
+    <!-- Link to secrets.js before other scripts that need it -->
+    <script src="secrets.js"></script>
+
     <!-- Link to map.js -->
     <script src="map.js"></script>
 
     <script>
+        /*
         const API_KEY = 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc';
         const SPREADSHEET_ID = '1X3Zp02qta_OV76s01pV52FV0kn3x3w0x7kzGLltbH6o';
+        */
+
+        const API_KEY = SECRETS.API_KEY;
+        const SPREADSHEET_ID = SECRETS.SPREADSHEET_ID;
+
 
         //let map;
         let selectedInterval = '1min';
