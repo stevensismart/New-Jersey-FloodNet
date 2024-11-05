@@ -23,24 +23,20 @@
 
     <script>
         const API_KEY = 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc';
-        const SPREADSHEET_ID = '1miVJSa0xSzzh3qg4o9cbhbeWDp-TigrdakkU91oEmn8';
+        const SPREADSHEET_ID = '1X3Zp02qta_OV76s01pV52FV0kn3x3w0x7kzGLltbH6o';
 
         let map;
         let selectedInterval = '1min';
         let useInches = true;
         let applyAveraging = false; // Default to "All Data"
         let sensorCoordinates = [
-            { lat: 40.74475, lng: -74.02597, name: 'Sensor 1' }, // Sensor 1
-            { lat: 40.746555657779005, lng: -74.03198526745322, name: 'Sensor 2 @Finnegan\'s Hoboken' }, // Sensor 2
-            { lat: 40.9948594604189, lng: -74.02735098264648, name: 'Sensor 3 @ Overbrook Park' }, // Sensor 3 - Overbrook Park
-            { lat: 40.74459, lng: -74.02543, name: 'Sensor 4' }, // Sensor 4
-            { lat: 40.99895153624935, lng: -74.0402086386315, name: 'Sensor 5 @  Richard Nugent Park' },  // Sensor 5
-            { lat: 40.74447226722596, lng: -74.02729028141329, name: 'Sensor 6 @Davidson Lab' },  // Sensor 6
-            { lat: 40.73584599585296, lng: -74.02767888184088, name: 'Sensor 7 @ Hoboken Terminal' },  // Sensor 7
-            { lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 8 @ Hillsdale Public Works Department' },  // Sensor 8
-            { lat: 40.99852592064648, lng: -74.03005456805411, name: 'Sensor 9 @ Brookside Park' }, // Sensor 9 - Westwood - Hillsdale Public Library
-            { lat: 40.99641869891097, lng: -74.0399895426159, name: 'Sensor 10 @ K-mart' } // Sensor 10 - Westwood            
+            { number: 12, lat: 40.9948594604189, lng: -74.02735098264648, name: 'Sensor 12 @ Overbrook Park', image: "./images/sensor12/overbrook_park.jpeg" },
+            { number: 13, lat: 40.99852592064648, lng: -74.03005456805411, name: 'Sensor 13 @ Brookside Park', image: "./images/sensor13/brookside_park.jpeg" },
+            { number: 14, lat: 40.99641869891097, lng: -74.0399895426159, name: 'Sensor 14 @ K-mart', image: "./images/sensor14/kmart.jpeg" },
+            { number: 15, lat: 40.99895153624935, lng: -74.0402086386315, name: 'Sensor 15 @ Richard Nugent Park', image: "./images/sensor15/richard_nugent_park.jpeg" },
+            { number: 18, lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 18 @ Hillsdale Public Works Department', image: "./images/sensor18/hillsdale_public_works.jpeg" }
         ];
+
         let sensorData = [];
         let charts = {}; // To store references to charts
 
@@ -89,17 +85,17 @@
 
         async function fetchDataForAllSensors() {
             const fetchPromises = sensorCoordinates.map((coords, index) => {
-                const RANGE = `V4 Sensor ${index + 1} Graph!A:F`;  // Include the sheet range properly
+                const RANGE = `V4 Sensor ${coords.number} Graph!A:F`;  // Include the sheet range properly
                 const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
                 return fetch(url)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error(`Failed to fetch data for sensor ${index + 1}: ${response.statusText}`);
+                            throw new Error(`Failed to fetch data for sensor ${coords.number}: ${response.statusText}`);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        console.log(`Fetched data for sensor ${index + 1}:`, data.values);
+                        console.log(`Fetched data for sensor ${coords.number}:`, data.values);
                         sensorData[index] = data.values.slice(1).map(row => ({
                             timestamp: new Date(row[0]),
                             waterLevelMM: parseFloat(row[1]),
@@ -111,7 +107,7 @@
                         coords.errorCode = sensorData[index][sensorData[index].length - 1]?.errorCode || 0;
                     })
                     .catch(error => {
-                        console.error(`Error fetching data for sensor ${index + 1}:`, error);
+                        console.error(`Error fetching data for sensor ${coords.number}:`, error);
                     });
             });
 
@@ -153,7 +149,7 @@
         function createCharts(index, marker, coordinates) {
             const parsedData = sensorData[index];
             if (!parsedData || parsedData.length === 0) {
-                console.error(`No data available for sensor ${index + 1}`);
+                console.error(`No data available for sensor ${coordinates.number}`);
                 return;
             }
 
@@ -381,7 +377,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `sensor_${index + 1}_data.json`;
+                a.download = `sensor_${coordinates.number}_data.json`;
                 a.click();
                 URL.revokeObjectURL(url);
             };
@@ -391,7 +387,7 @@
             downloadWaterLevelPNGButton.onclick = () => {
                 const link = document.createElement('a');
                 link.href = waterLevelChart.toBase64Image();
-                link.download = `sensor_${index + 1}_water_level.png`;
+                link.download = `sensor_${coordinates.number}_water_level.png`;
                 link.click();
             };
 
@@ -400,7 +396,7 @@
             downloadRainPNGButton.onclick = () => {
                 const link = document.createElement('a');
                 link.href = rainChart.toBase64Image();
-                link.download = `sensor_${index + 1}_rain.png`;
+                link.download = `sensor_${coordinates.number}_rain.png`;
                 link.click();
             };
 
