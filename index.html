@@ -27,6 +27,8 @@
     <!-- Link to map.js -->
     <script src="map.js"></script>
 
+    <script src="navbar.js"></script>
+
     <script>
         /*
         const API_KEY = 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc';
@@ -59,8 +61,7 @@
                 setInterval(updateCharts, 60000); // Update charts every 1 minute
             });
         });
-
-
+/*
         function initNavbar() {
             const navbar = document.createElement('div');
             navbar.className = 'navbar';
@@ -77,6 +78,7 @@
 
             document.body.insertBefore(navbar, document.body.firstChild);
         }
+*/
 
         async function fetchDataForAllSensors() {
             const fetchPromises = sensorCoordinates.map((coords, index) => {
