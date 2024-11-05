@@ -12,50 +12,50 @@
     
     <link rel="stylesheet" href="styles.css"> <!-- Link to the external CSS file -->
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-    <script src="https://cdn.jsdelivr.net/npm/moment-timezone/builds/moment-timezone-with-data.min.js"></script>
-
-    <!-- Link to secrets.js before other scripts that need it -->
-    <script src="secrets.js"></script>
-
-    <!-- Link to map.js -->
-    <script src="map.js"></script>
-
-    <script src="navbar.js"></script>
-
-    <script src="fetchData.js"></script>
-
-    <script src="helpers.js"></script>
-
-    <script src="charts.js"></script>
-
-    <script>
-
-        let selectedInterval = '1min';
-        let useInches = true;
-        let applyAveraging = false; // Default to "All Data"
-
-        let sensorData = [];
-        let charts = {}; // To store references to charts
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initMap();
-            initNavbar();
-            fetchDataForAllSensors().then(() => {
-                setInterval(updateCharts, 60000); // Update charts every 1 minute
-            });
-        });
-
-        document.addEventListener('DOMContentLoaded', initMap);
-    </script>
 </head>
 <body>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment-timezone/builds/moment-timezone-with-data.min.js"></script>
+
+<!-- Link to secrets.js before other scripts that need it -->
+<script src="secrets.js"></script>
+
+<!-- Link to map.js -->
+<script src="map.js"></script>
+
+<script src="navbar.js"></script>
+
+<script src="fetchData.js"></script>
+
+<script src="helpers.js"></script>
+
+<script src="charts.js"></script>
+
+<script>
+
+    let selectedInterval = '1min';
+    let useInches = true;
+    let applyAveraging = false; // Default to "All Data"
+
+    let sensorData = [];
+    let charts = {}; // To store references to charts
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initMap();
+        initNavbar();
+        fetchDataForAllSensors().then(() => {
+            setInterval(updateCharts, 60000); // Update charts every 1 minute
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', initMap);
+</script>
     <div id="map"></div>
 </body>
 </html>
