@@ -3,7 +3,9 @@ const sensorCoordinates = [
     { number: 13, lat: 40.99852592064648, lng: -74.03005456805411, name: 'Sensor 13 @ Brookside Park', image: "./images/sensor13/brookside_park.jpeg" },
     { number: 14, lat: 40.99641869891097, lng: -74.0399895426159, name: 'Sensor 14 @ K-mart', image: "./images/sensor14/kmart.jpeg" },
     { number: 15, lat: 40.99895153624935, lng: -74.0402086386315, name: 'Sensor 15 @ Richard Nugent Park', image: "./images/sensor15/richard_nugent_park.jpeg" },
-    { number: 18, lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 18 @ Hillsdale Public Works Department', image: "./images/sensor18/hillsdale_public_works.jpeg" }
+    { number: 18, lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 18 @ Hillsdale Public Works Department', image: "./images/sensor18/hillsdale_public_works.jpeg" },
+    { number: 16, lat: 40.73584599585296, lng: -74.02767888184088, name: 'Sensor 16 @ Hoboken Terminal', image: "./images/sensor16/hillsdale_public_works.jpeg" },
+    { number: 17, lat: 40.746555657779005, lng: -74.03198526745322, name: 'Sensor 17 @ @Finnegan\'s Hoboken', image: "./images/sensor17/hillsdale_public_works.jpeg" },
 ];
 
 let map;
@@ -15,7 +17,7 @@ function initMap() {
         map.remove();  // Properly remove the existing map instance
     }
 
-    map = L.map('map').setView([40.9867281870996, -74.03802581654276], 13);
+    map = L.map('map').setView([40.80391741650648, -74.0319076685521], 10);
 
     // Define tile layers
     const openStreetMapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
