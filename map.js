@@ -10,8 +10,14 @@ const sensorCoordinates = [
 ];
 
 let map;
-
 const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiaWd1bDk0IiwiYSI6ImNtMzRtcnFnejAwMGwyanB4cDMxZnA4em8ifQ.93yyvSuGOpJeaprYmWy1KQ';  // Replace with your Mapbox token
+
+function preloadImages() {
+    sensorCoordinates.forEach(coords => {
+        const img = new Image();
+        img.src = coords.image;
+    });
+}
 
 function initMap() {
     if (map) {
@@ -40,19 +46,28 @@ function initMap() {
         "OpenStreetMap": openStreetMapTiles
     }).addTo(map);
 
+    // Preload images to ensure they're cached before displaying
+    preloadImages();
+
+    // Add markers
     sensorCoordinates.forEach((coords, index) => {
         const marker = L.marker([coords.lat, coords.lng]).addTo(map);
 
+        // Bind tooltip with a placeholder
         marker.bindTooltip(
             `<div class="sensor-tooltip">
                 <div class="sensor-title">${coords.name}</div>
-                <img src="${coords.image}" alt="${coords.name}">
+                <img src="${coords.image}" alt="${coords.name}" onerror="this.onerror=null;this.src='./images/placeholder.jpg';">
             </div>`,
             { permanent: false, direction: 'top', className: 'custom-tooltip' }
         );
+
+        // On marker click, trigger chart creation or other interactions
         marker.on('click', () => {
             createCharts(index, marker, coords);
         });
     });
 }
 
+// Initialize map after the page loads
+window.onload = initMap;
