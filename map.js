@@ -27,12 +27,12 @@ function initMap() {
     map = L.map('map').setView([40.80391741650648, -74.0319076685521], 10);
 
     // Define tile layers
-    const openStreetMapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    const openStreetMapTiles = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`, {
+        maxZoom: 20,
+        attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> contributors, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     });
 
-    const mapboxTiles = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`, {
+    const mapboxTiles = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`, {
         maxZoom: 20,
         attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> contributors, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     });
@@ -42,8 +42,8 @@ function initMap() {
 
     // Add layer control to toggle between map backgrounds
     L.control.layers({
-        "Mapbox Streets": mapboxTiles,
-        "OpenStreetMap": openStreetMapTiles
+        "Satellite Map": mapboxTiles,
+        "Street Map": openStreetMapTiles
     }).addTo(map);
 
     // Preload images to ensure they're cached before displaying
