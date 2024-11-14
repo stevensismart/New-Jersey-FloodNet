@@ -1,12 +1,12 @@
 const sensorCoordinates = [
-    { number: 12, lat: 40.9948594604189, lng: -74.02735098264648, name: 'Sensor 12 @ Overbrook Park', image: "./images/sensor12/overbrook_park.jpg" },
-    { number: 13, lat: 40.99852592064648, lng: -74.03005456805411, name: 'Sensor 13 @ Brookside Park', image: "./images/sensor13/brookside_park.jpg" },
-    { number: 14, lat: 40.99641869891097, lng: -74.0399895426159, name: 'Sensor 14 @ K-mart', image: "./images/sensor14/kmart.jpg" },
-    { number: 15, lat: 40.99895153624935, lng: -74.0402086386315, name: 'Sensor 15 @ Richard Nugent Park', image: "./images/sensor15/richard_nugent_park.jpg" },
-    { number: 18, lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 18 @ Hillsdale Public Works Department', image: "./images/sensor18/hillsdale_public_works.jpg" },
-    { number: 16, lat: 40.73584599585296, lng: -74.02767888184088, name: 'Sensor 16 @ Hoboken Terminal', image: "./images/sensor16/hoboken_terminal.jpg" },
-    { number: 19, lat: 40.746555657779005, lng: -74.03198526745322, name: 'Sensor 19 @ Finnegan\'s Hoboken', image: "./images/sensor19/Finnegan.jpg" },
-    { number: 17, lat: 40.74447226722596, lng: -74.02729028141329, name: 'Sensor 17 @ Davidson Lab', image: "./images/sensor17/davidson_lab.jpg" },
+    { number: 12, lat: 40.9948594604189, lng: -74.02735098264648, name: 'Sensor 12 @ Overbrook Park', image: "./images/sensor12/overbrook_park.jpeg" },
+    { number: 13, lat: 40.99852592064648, lng: -74.03005456805411, name: 'Sensor 13 @ Brookside Park', image: "./images/sensor13/brookside_park.jpeg" },
+    { number: 14, lat: 40.99641869891097, lng: -74.0399895426159, name: 'Sensor 14 @ K-mart', image: "./images/sensor14/kmart.jpeg" },
+    { number: 15, lat: 40.99895153624935, lng: -74.0402086386315, name: 'Sensor 15 @ Richard Nugent Park', image: "./images/sensor15/richard_nugent_park.jpeg" },
+    { number: 18, lat: 40.99993328198413, lng: -74.04005036459259, name: 'Sensor 18 @ Hillsdale Public Works Department', image: "./images/sensor18/hillsdale_public_works.jpeg" },
+    { number: 16, lat: 40.73584599585296, lng: -74.02767888184088, name: 'Sensor 16 @ Hoboken Terminal', image: "./images/sensor16/hoboken_terminal.jpeg" },
+    { number: 19, lat: 40.746555657779005, lng: -74.03198526745322, name: 'Sensor 19 @ Finnegan\'s Hoboken', image: "./images/sensor19/Finnegan.jpeg" },
+    { number: 17, lat: 40.74447226722596, lng: -74.02729028141329, name: 'Sensor 17 @ Davidson Lab', image: "./images/sensor17/davidson_lab.jpeg" },
 ];
 
 let map;
