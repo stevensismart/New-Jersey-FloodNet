@@ -1,6 +1,6 @@
 async function fetchDataForAllSensors() {
     const fetchPromises = sensorCoordinates.map((coords, index) => {
-        const RANGE = `V4 Sensor ${coords.number} Graph!A:F`;  // Include the sheet range properly
+        const RANGE = `V4 Sensor ${coords.number} Graph!A:G`;  // Include the sheet range properly
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${SECRETS.SPREADSHEET_ID}/values/${RANGE}?key=${SECRETS.API_KEY}`;
         return fetch(url)
             .then(response => {
@@ -10,14 +10,16 @@ async function fetchDataForAllSensors() {
                 return response.json();
             })
             .then(data => {
-                console.log(`Fetched data for sensor ${coords.number}:`, data.values);
+                //console.log(`Fetched data for sensor ${coords.number}:`, data.values);
+                console.log(`Fetched data for sensor ${coords.number}`);
                 sensorData[index] = data.values.slice(1).map(row => ({
                     timestamp: new Date(row[0]),
                     waterLevelMM: parseFloat(row[1]),
                     waterLevelInches: parseFloat(row[2]),
                     rainAccumulationMM: parseFloat(row[3]),
                     rainAccumulationInches: parseFloat(row[4]),
-                    errorCode: parseInt(row[5])  // Add errorCode from column F
+                    errorCode: parseInt(row[5]),  // Add errorCode from column F
+                    voltage: parseFloat(row[6])  // Add voltage from column G
                 })).filter(data => data.rainAccumulationMM !== 650.25); // Exclude erroneous data
                 coords.errorCode = sensorData[index][sensorData[index].length - 1]?.errorCode || 0;
             })

@@ -1,4 +1,3 @@
-
 function createCharts(index, marker, coordinates) {
     const parsedData = sensorData[index];
     if (!parsedData || parsedData.length === 0) {
@@ -9,9 +8,10 @@ function createCharts(index, marker, coordinates) {
     const dataPoints = getDataPointsCount(selectedInterval);
     const filteredData = parsedData.slice(-dataPoints);
 
-    const labels = filteredData.map(entry => moment(entry.timestamp).format('MM-DD HH:mm'));  // Include date and time
+    const labels = filteredData.map(entry => moment(entry.timestamp).format('MM-DD HH:mm'));
     const waterLevelData = useInches ? filteredData.map(entry => entry.waterLevelInches.toFixed(2)) : filteredData.map(entry => entry.waterLevelMM.toFixed(2));
     const rainAccumulationData = useInches ? filteredData.map(entry => entry.rainAccumulationInches.toFixed(2)) : filteredData.map(entry => entry.rainAccumulationMM.toFixed(2));
+    const voltageData = filteredData.map(entry => parseFloat(entry.voltage));
 
     let displayedWaterLevelData = waterLevelData;
     let displayedRainAccumulationData = rainAccumulationData;
@@ -26,60 +26,39 @@ function createCharts(index, marker, coordinates) {
         displayedRainAccumulationData = getMedianData(rainAccumulationData, intervalMultiplier);
     }
 
-    const tabContainer = document.createElement('div');
-    tabContainer.className = 'tabs';
+    // Create combined chart with dual Y-axes
+    const combinedCanvas = document.createElement('canvas');
+    combinedCanvas.classList.add('chart-container');
+    combinedCanvas.width = 600;
+    combinedCanvas.height = 300;
+    const combinedCtx = combinedCanvas.getContext('2d');
 
-    const tabButtons = document.createElement('div');
-    tabButtons.className = 'tab-buttons';
-
-    const waterLevelTabButton = document.createElement('button');
-    waterLevelTabButton.innerText = 'Water Level (AGL)';
-    waterLevelTabButton.onclick = () => {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        waterLevelTab.classList.add('active');
-        document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
-        waterLevelTabButton.classList.add('active');
-        toggleAveragingButton.disabled = true; // Disable averaging button for Water Level tab
-    };
-
-    const rainTabButton = document.createElement('button');
-    rainTabButton.className = 'active';
-    rainTabButton.innerText = 'Rain Accumulation';
-    rainTabButton.onclick = () => {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        rainTab.classList.add('active');
-        document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
-        rainTabButton.classList.add('active');
-        toggleAveragingButton.disabled = false; // Enable averaging button for Rain Accumulation tab
-    };
-
-    tabButtons.appendChild(waterLevelTabButton);
-    tabButtons.appendChild(rainTabButton);
-    tabContainer.appendChild(tabButtons);
-
-    const waterLevelTab = document.createElement('div');
-    waterLevelTab.className = 'tab-content';
-
-    const rainTab = document.createElement('div');
-    rainTab.className = 'tab-content active';
-
-    const waterLevelCanvas = document.createElement('canvas');
-    waterLevelCanvas.classList.add('chart-container');
-    waterLevelCanvas.width = 600;
-    waterLevelCanvas.height = 300;
-    const waterLevelCtx = waterLevelCanvas.getContext('2d');
-    const waterLevelChart = new Chart(waterLevelCtx, {
+    const combinedChart = new Chart(combinedCtx, {
         type: 'line',
         data: {
             labels: labels.slice(0, displayedWaterLevelData.length),
-            datasets: [{
-                label: `Water Level`,
-                data: displayedWaterLevelData,
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1,
-                showLine: false // This ensures only dots are shown
-            }]
+            datasets: [
+                {
+                    label: 'Water Level',
+                    data: displayedWaterLevelData,
+                    borderColor: 'rgba(255, 99, 132, 1)',  // Pink color
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    yAxisID: 'yWaterLevel',
+                    borderWidth: 1,
+                    showLine: false,  // Disable connecting lines
+                    pointRadius: 3    // Set point size
+                },
+                {
+                    label: 'Rain Accumulation',
+                    data: displayedRainAccumulationData,
+                    borderColor: 'rgba(54, 162, 235, 1)',  // Blue color
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    yAxisID: 'yRain',
+                    borderWidth: 1,
+                    showLine: false,  // Disable connecting lines
+                    pointRadius: 3    // Set point size
+                }
+            ]
         },
         options: {
             responsive: false,
@@ -87,46 +66,76 @@ function createCharts(index, marker, coordinates) {
                 x: {
                     type: 'time',
                     time: {
-                        parser: 'MM-DD HH:mm',  // Parse both date and time
+                        parser: 'MM-DD HH:mm',
                         tooltipFormat: 'MM-DD HH:mm',
                         unit: 'minute',
                         displayFormats: {
-                            minute: 'MM-DD HH:mm'  // Display both date and time
+                            minute: 'MM-DD HH:mm'
                         }
                     }
                 },
-                y: {
+                yWaterLevel: {
+                    type: 'linear',
+                    position: 'left',
                     title: {
                         display: true,
-                        text: 'Water Level (AGL)'
+                        text: `Water Level (${useInches ? 'inches' : 'mm'})`,
+                        color: 'rgba(255, 99, 132, 1)'  // Pink color for axis title
                     },
                     ticks: {
-                        callback: function(value) {
-                            return `${value.toFixed(2)} ${useInches ? 'inches' : 'mm'}`;
-                        }
-                    }
+                        callback: value => value < 0 ? '' : `${value} ${useInches ? 'in' : 'mm'}`,  // Hide negative labels
+                        color: 'rgba(255, 99, 132, 1)'  // Pink color for ticks
+                    },
+                    grid: {
+                        color: 'rgba(255, 99, 132, 0.2)'  // Pink color for grid lines
+                    },
+                    suggestedMin: -0.01,  // Fixed margin just below 0
+                    suggestedMax: Math.max(...displayedWaterLevelData) + 0.05   // Small margin above the highest point
+                },
+                yRain: {
+                    type: 'linear',
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: `Rain Accumulation (${useInches ? 'inches' : 'mm'})`,
+                        color: 'rgba(54, 162, 235, 1)'  // Blue color for axis title
+                    },
+                    ticks: {
+                        callback: value => value < 0 ? '' : `${value} ${useInches ? 'in' : 'mm'}`,  // Hide negative labels
+                        color: 'rgba(54, 162, 235, 1)'  // Blue color for ticks
+                    },
+                    grid: {
+                        drawOnChartArea: false  // Disables grid lines for the right axis
+                    },
+                    suggestedMin: -0.01,  // Fixed margin just below 0
+                    suggestedMax: Math.max(...displayedRainAccumulationData) + 0.05   // Small margin above the highest point
                 }
             }
         }
     });
 
-    const rainCanvas = document.createElement('canvas');
-    rainCanvas.classList.add('chart-container');
-    rainCanvas.width = 600;
-    rainCanvas.height = 300;
-    const rainCtx = rainCanvas.getContext('2d');
-    const rainChart = new Chart(rainCtx, {
+    // Voltage Chart
+    const voltageCanvas = document.createElement('canvas');
+    voltageCanvas.classList.add('chart-container');
+    voltageCanvas.width = 600;
+    voltageCanvas.height = 300;
+    const voltageCtx = voltageCanvas.getContext('2d');
+
+    const voltageChart = new Chart(voltageCtx, {
         type: 'line',
         data: {
-            labels: labels.slice(0, displayedRainAccumulationData.length),
-            datasets: [{
-                label: `Rain Accumulation`,
-                data: displayedRainAccumulationData,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1,
-                showLine: false // This ensures only dots are shown
-            }]
+            labels: labels.slice(0, voltageData.length),
+            datasets: [
+                {
+                    label: 'Voltage Level',
+                    data: voltageData,
+                    borderColor: 'rgba(75, 192, 192, 1)',  // Cyan color
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 1,
+                    showLine: false,
+                    pointRadius: 2
+                }
+            ]
         },
         options: {
             responsive: false,
@@ -134,52 +143,90 @@ function createCharts(index, marker, coordinates) {
                 x: {
                     type: 'time',
                     time: {
-                        parser: 'MM-DD HH:mm',  // Parse both date and time
+                        parser: 'MM-DD HH:mm',
                         tooltipFormat: 'MM-DD HH:mm',
                         unit: 'minute',
                         displayFormats: {
-                            minute: 'MM-DD HH:mm'  // Display both date and time
+                            minute: 'MM-DD HH:mm'
                         }
                     }
                 },
                 y: {
                     title: {
                         display: true,
-                        text: 'Rain Accumulation'
+                        text: 'Voltage (V)'
                     },
                     ticks: {
-                        callback: function(value) {
-                            return `${value.toFixed(2)} ${useInches ? 'inches' : 'mm'}`;
-                        }
+                        callback: value => `${value} V`
                     }
                 }
             }
         }
     });
 
-    waterLevelTab.appendChild(waterLevelCanvas);
-    rainTab.appendChild(rainCanvas);
+    charts[index] = { combinedChart, voltageChart }; // Store chart references
 
-    tabContainer.appendChild(waterLevelTab);
-    tabContainer.appendChild(rainTab);
-
-    charts[index] = { waterLevelChart, rainChart }; // Store chart references
-
+    // Popup content
     const popupContent = document.createElement('div');
     popupContent.className = 'popup-content';
 
-    const errorStatus = coordinates.errorCode !== 0 ? "error-yes" : "error-no"; // Determine error status
-
+    // Error status and date element
+    const errorStatus = coordinates.errorCode !== 0 ? "error-yes" : "error-no";
     const dateElement = document.createElement('div');
     dateElement.className = 'popup-header';
     dateElement.innerHTML = `Sensor: ${coordinates.name} <span class="error-status">Status: <div class="error-circle ${errorStatus}"></div></span><br>Date: ${moment().tz('America/New_York').format('YYYY-MM-DD')} Time: ${moment().tz('America/New_York').format('HH:mm')} (EDT)`;
     popupContent.appendChild(dateElement);
 
+// Tab Buttons
+const tabButtons = document.createElement('div');
+tabButtons.className = 'tab-buttons';
+
+const dataTabButton = document.createElement('button');
+dataTabButton.innerText = 'Sensor Data';
+dataTabButton.className = 'tab-button active';  // Default active tab
+dataTabButton.onclick = () => {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+    dataTab.classList.add('active');
+    dataTabButton.classList.add('active');
+    toggleMetricButton.disabled = false;  // Enable on Sensor Data tab
+    toggleMetricButton.innerText = useInches ? 'Inches' : 'mm';
+};
+
+const voltageTabButton = document.createElement('button');
+voltageTabButton.innerText = 'Battery Level';
+voltageTabButton.className = 'tab-button';
+voltageTabButton.onclick = () => {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+    voltageTab.classList.add('active');
+    voltageTabButton.classList.add('active');
+    toggleMetricButton.disabled = true;  // Disable on Voltage Level tab
+    toggleMetricButton.innerText = 'Volt';
+};
+
+tabButtons.appendChild(dataTabButton);
+tabButtons.appendChild(voltageTabButton);
+popupContent.appendChild(tabButtons);
+
+
+    // Tab Contents
+    const dataTab = document.createElement('div');
+    dataTab.classList.add('tab-content', 'active');  // Show data tab by default
+    dataTab.appendChild(combinedCanvas);
+
+    const voltageTab = document.createElement('div');
+    voltageTab.classList.add('tab-content');
+    voltageTab.appendChild(voltageCanvas);
+
+    popupContent.appendChild(dataTab);
+    popupContent.appendChild(voltageTab);
+
+    // Interval and Averaging Toggles
     const intervalSelectContainer = document.createElement('div');
     intervalSelectContainer.className = 'interval-select-container';
     const intervalSelect = document.createElement('select');
-    const intervals = ['1min', '5min', '15min', '1hour'];
-    intervals.forEach(interval => {
+    ['1min', '5min', '15min', '1hour'].forEach(interval => {
         const option = document.createElement('option');
         option.value = interval;
         option.innerText = interval;
@@ -192,7 +239,6 @@ function createCharts(index, marker, coordinates) {
     };
     intervalSelectContainer.appendChild(intervalSelect);
 
-    // Create the toggleAveragingButton
     const toggleAveragingButton = document.createElement('button');
     toggleAveragingButton.innerText = applyAveraging ? 'Averaging' : 'All Data';
     toggleAveragingButton.onclick = () => {
@@ -211,14 +257,12 @@ function createCharts(index, marker, coordinates) {
     };
     intervalSelectContainer.appendChild(toggleMetricButton);
 
-    popupContent.appendChild(tabContainer);
-    popupContent.appendChild(intervalSelectContainer);
-
+    // Download buttons
     const downloadButtons = document.createElement('div');
     downloadButtons.className = 'download-buttons';
 
     const downloadJSONButton = document.createElement('button');
-    downloadJSONButton.innerText = 'Download JSON';
+    downloadJSONButton.innerText = 'Download Data (JSON)';
     downloadJSONButton.onclick = () => {
         const jsonData = {
             sensor: coordinates.name,
@@ -235,28 +279,21 @@ function createCharts(index, marker, coordinates) {
         URL.revokeObjectURL(url);
     };
 
-    const downloadWaterLevelPNGButton = document.createElement('button');
-    downloadWaterLevelPNGButton.innerText = 'Download Water Level PNG';
-    downloadWaterLevelPNGButton.onclick = () => {
+    const downloadFigureButton = document.createElement('button');
+    downloadFigureButton.innerText = 'Download Data (Figure.png)';
+    downloadFigureButton.onclick = () => {
+        const activeChart = voltageTab.classList.contains('active') ? voltageChart : combinedChart;
         const link = document.createElement('a');
-        link.href = waterLevelChart.toBase64Image();
-        link.download = `sensor_${coordinates.number}_water_level.png`;
-        link.click();
-    };
-
-    const downloadRainPNGButton = document.createElement('button');
-    downloadRainPNGButton.innerText = 'Download Rain PNG';
-    downloadRainPNGButton.onclick = () => {
-        const link = document.createElement('a');
-        link.href = rainChart.toBase64Image();
-        link.download = `sensor_${coordinates.number}_rain.png`;
+        link.href = activeChart.toBase64Image();
+        link.download = `sensor_${coordinates.number}_figure.png`;
         link.click();
     };
 
     downloadButtons.appendChild(downloadJSONButton);
-    downloadButtons.appendChild(downloadWaterLevelPNGButton);
-    downloadButtons.appendChild(downloadRainPNGButton);
+    downloadButtons.appendChild(downloadFigureButton);
 
+    // Append interval controls and download buttons below the chart
+    popupContent.appendChild(intervalSelectContainer);
     popupContent.appendChild(downloadButtons);
 
     if (marker.getPopup()) {
@@ -269,39 +306,52 @@ function createCharts(index, marker, coordinates) {
     }
 }
 
+// Update charts with the latest data
+// Update charts with the latest data without fetching again
 function updateCharts() {
-    fetchDataForAllSensors().then(() => {
-        Object.keys(charts).forEach(index => {
-            const parsedData = sensorData[index];
-            const { waterLevelChart, rainChart } = charts[index];
+    Object.keys(charts).forEach(index => {
+        const parsedData = sensorData[index];
+        const { combinedChart, voltageChart } = charts[index];
 
-            const dataPoints = getDataPointsCount(selectedInterval);
-            const filteredData = parsedData.slice(-dataPoints);
+        const dataPoints = getDataPointsCount(selectedInterval);
+        const filteredData = parsedData.slice(-dataPoints);
 
-            const labels = filteredData.map(entry => moment(entry.timestamp).format('MM-DD HH:mm'));  // Include date and time
-            const waterLevelData = useInches ? filteredData.map(entry => entry.waterLevelInches.toFixed(2)) : filteredData.map(entry => entry.waterLevelMM.toFixed(2));
-            const rainAccumulationData = useInches ? filteredData.map(entry => entry.rainAccumulationInches.toFixed(2)) : filteredData.map(entry => entry.rainAccumulationMM.toFixed(2));
+        const labels = filteredData.map(entry => moment(entry.timestamp).format('MM-DD HH:mm'));
+        const waterLevelData = useInches ? filteredData.map(entry => entry.waterLevelInches) : filteredData.map(entry => entry.waterLevelMM);
+        const rainAccumulationData = useInches ? filteredData.map(entry => entry.rainAccumulationInches) : filteredData.map(entry => entry.rainAccumulationMM);
+        const voltageData = filteredData.map(entry => parseFloat(entry.voltage));
 
-            let displayedWaterLevelData = waterLevelData;
-            let displayedRainAccumulationData = rainAccumulationData;
+        // Determine if we need to apply averaging for each data set
+        let displayedWaterLevelData = waterLevelData;
+        let displayedRainAccumulationData = rainAccumulationData;
+        let displayedVoltageData = voltageData;
 
-            if (selectedInterval !== '1min' && applyAveraging) {
-                const intervalMultiplier = {
-                    '5min': 5,
-                    '15min': 15,
-                    '1hour': 15
-                }[selectedInterval];
-                displayedWaterLevelData = getMedianData(waterLevelData, intervalMultiplier);
-                displayedRainAccumulationData = getMedianData(rainAccumulationData, intervalMultiplier);
-            }
+        if (applyAveraging && selectedInterval !== '1min') {
+            const intervalMultiplier = {
+                '5min': 5,
+                '15min': 15,
+                '1hour': 15
+            }[selectedInterval];
 
-            waterLevelChart.data.labels = labels.slice(0, displayedWaterLevelData.length);
-            waterLevelChart.data.datasets[0].data = displayedWaterLevelData;
-            waterLevelChart.update();
+            displayedWaterLevelData = getMedianData(waterLevelData, intervalMultiplier);
+            displayedRainAccumulationData = getMedianData(rainAccumulationData, intervalMultiplier);
+            displayedVoltageData = getMedianData(voltageData, intervalMultiplier);
+        } else {
+            displayedWaterLevelData = waterLevelData;
+            displayedRainAccumulationData = rainAccumulationData;
+            displayedVoltageData = voltageData;
+        }
 
-            rainChart.data.labels = labels.slice(0, displayedRainAccumulationData.length);
-            rainChart.data.datasets[0].data = displayedRainAccumulationData;
-            rainChart.update();
-        });
+        // Update combined chart data
+        combinedChart.data.labels = labels.slice(0, displayedWaterLevelData.length);
+        combinedChart.data.datasets[0].data = displayedWaterLevelData.map(value => parseFloat(value.toFixed(2)));
+        combinedChart.data.datasets[1].data = displayedRainAccumulationData.map(value => parseFloat(value.toFixed(2)));
+        combinedChart.update();
+
+        // Update voltage chart data
+        voltageChart.data.labels = labels.slice(0, displayedVoltageData.length);
+        voltageChart.data.datasets[0].data = displayedVoltageData.map(value => parseFloat(value.toFixed(2)));
+        voltageChart.update();
     });
 }
+
