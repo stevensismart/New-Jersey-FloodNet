@@ -1,7 +1,7 @@
 async function fetchDataForAllSensors() {
     const fetchPromises = sensorCoordinates.map((coords, index) => {
-        const RANGE = `V4 Sensor ${coords.number} Graph!A:F`;  // Include the sheet range properly
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SECRETS.SPREADSHEET_ID}/values/${RANGE}?key=${SECRETS.API_KEY}`;
+        const RANGE = `V4 Sensor ${coords.number} Graph!A:F`;
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${coords.spreadsheetId}/values/${RANGE}?key=${coords.apiKey}`;
         return fetch(url)
             .then(response => {
                 if (!response.ok) {
@@ -17,8 +17,8 @@ async function fetchDataForAllSensors() {
                     waterLevelInches: parseFloat(row[2]),
                     rainAccumulationMM: parseFloat(row[3]),
                     rainAccumulationInches: parseFloat(row[4]),
-                    errorCode: parseInt(row[5])  // Add errorCode from column F
-                })).filter(data => data.rainAccumulationMM !== 650.25); // Exclude erroneous data
+                    errorCode: parseInt(row[5])
+                })).filter(data => data.rainAccumulationMM !== 650.25);
                 coords.errorCode = sensorData[index][sensorData[index].length - 1]?.errorCode || 0;
             })
             .catch(error => {
