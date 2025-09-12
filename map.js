@@ -10,7 +10,7 @@ const sensorCoordinates = [
     { number: 26, lat: 41.00780536383797, lng: -74.04749480127796, name: 'Sensor 26 @ Queen Ct - Westwood', image: "./images/sensor26/queen_ct_westwood.jpeg", spreadsheetId: '1vKp82zeHvWvt-DLxPd2neIm4JHoU_hY7T6yt41mh8eo', apiKey: 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc', },
     { number: 22, lat: 41.02884217070034, lng: -74.04820204772778, name: 'Sensor 22 @ Bear Brook & Glen Road', image: "./images/sensor22/bear_brook.jpeg", spreadsheetId: '16cnoxRoM5UEcXONfa8wyUZiHcVuMDkBHVzsNLz9dZos', apiKey: 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc', },
     { number: 23, lat: 41.035141399902244, lng: -74.03901540144574, name: 'Sensor 23 @ Mill Brook & Willet St', image: "./images/sensor23/mill_brook.jpeg", spreadsheetId: '1hrQBoei2zxBWyoPCtqAksEDiLdtp1uL0AxTpRVbfBfA', apiKey: 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc', },
-    { number: 25, lat: 40.98653799845786, lng: -74.03901540144574, name: 'Sensor 25 @ Misquapsink Brook', image: "./images/sensor25/misquapsink_brook.jpeg", spreadsheetId: '1oM62__RdH5naxflkVo9_l5iyWY9d_Ij-shAt0rS_gwM', apiKey: 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc', },
+    { number: 25, lat: 40.98653799845786, lng: -74.02812967555288, name: 'Sensor 25 @ Misquapsink Brook', image: "./images/sensor25/misquapsink_brook.jpeg", spreadsheetId: '1oM62__RdH5naxflkVo9_l5iyWY9d_Ij-shAt0rS_gwM', apiKey: 'AIzaSyDo0gFx2YjNdhSqgjrWWmX-eK0Flyvy5vc', },
 ];
 
 let map;
